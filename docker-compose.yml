@@ -1,0 +1,76 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-formbuilder}
+      MYSQL_USER: ${MYSQL_USER:-formuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-formpass}
+    ports:
+      - "3307:3306"          # 3307 on the host so it never clashes with a local MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment: &backend_env
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-formuser}:${MYSQL_PASSWORD:-formpass}@db:3306/${MYSQL_DATABASE:-formbuilder}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
+      FIRST_ADMIN_NAME: ${FIRST_ADMIN_NAME:-Administrator}
+      FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL:-admin@example.com}
+      FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD:-Admin@12345}
+      UPLOAD_DIR: /data/uploads
+      EXPORT_DIR: /data/exports
+    volumes:
+      - app_data:/data
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    command: celery -A app.worker.celery_app.celery_app worker --loglevel=info
+    depends_on:
+      - backend
+    environment: *backend_env
+    volumes:
+      - app_data:/data
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000/api/v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  mysql_data:
+  app_data:

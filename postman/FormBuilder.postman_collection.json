@@ -1,0 +1,2059 @@
+{
+  "info": {
+    "name": "Dynamic Form Builder API",
+    "description": "Run **Auth > Login** first - it stores `access_token` automatically. IDs (`form_id`, `field_id`, ...) are saved by the create requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "api",
+      "value": "{{base_url}}/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "form_id",
+      "value": "1"
+    },
+    {
+      "key": "field_id",
+      "value": "1"
+    },
+    {
+      "key": "option_id",
+      "value": "1"
+    },
+    {
+      "key": "response_id",
+      "value": "1"
+    },
+    {
+      "key": "slug",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": "2"
+    },
+    {
+      "key": "task_id",
+      "value": ""
+    },
+    {
+      "key": "file_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "POST Register a new user (role: user)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/auth/register",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ],
+              "query": []
+            },
+            "description": "Register a new user (role: user)",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Sandhiya\",\n  \"email\": \"sandhiya@example.com\",\n  \"password\": \"StrongPass@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Login with email & password (JSON) and get JWT tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/auth/login",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "description": "Login with email & password (JSON) and get JWT tokens",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin@12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', j.access_token);",
+                  "pm.collectionVariables.set('refresh_token', j.refresh_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST OAuth2 password flow (used by the Swagger 'Authorize' button; username = email)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/auth/token",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "auth",
+                "token"
+              ],
+              "query": []
+            },
+            "description": "OAuth2 password flow (used by the Swagger 'Authorize' button; username = email)",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "admin@example.com"
+                },
+                {
+                  "key": "password",
+                  "value": "Admin@12345"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', j.access_token);",
+                  "pm.collectionVariables.set('refresh_token', j.refresh_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Exchange a refresh token for new tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/auth/refresh",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ],
+              "query": []
+            },
+            "description": "Exchange a refresh token for new tokens",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', j.access_token);",
+                  "pm.collectionVariables.set('refresh_token', j.refresh_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Current logged-in user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/auth/me",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Current logged-in user"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users & Roles (Admin)",
+      "item": [
+        {
+          "name": "GET List roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/roles",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "roles"
+              ],
+              "query": []
+            },
+            "description": "List roles"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET List / search users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/users?search=&role=&is_active=&page=&size=",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Matches name or email"
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "is_active",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "List / search users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Get a user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/users/{{user_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ],
+              "query": []
+            },
+            "description": "Get a user"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH Update name / activate / deactivate a user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/users/{{user_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ],
+              "query": []
+            },
+            "description": "Update name / activate / deactivate a user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"New Name\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Delete a user (only if they own no forms)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/users/{{user_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ],
+              "query": []
+            },
+            "description": "Delete a user (only if they own no forms)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH Change a user's role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/users/{{user_id}}/role",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}",
+                "role"
+              ],
+              "query": []
+            },
+            "description": "Change a user's role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Forms & Builder",
+      "item": [
+        {
+          "name": "POST Create a form",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms"
+              ],
+              "query": []
+            },
+            "description": "Create a form",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Customer Feedback\",\n  \"description\": \"Tell us what you think\",\n  \"is_public\": true,\n  \"allow_response_editing\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('form_id', j.id);",
+                  "pm.collectionVariables.set('slug', j.slug);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET List / search forms (admin: all, user: own)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms?search=&is_active=&is_public=&mine=&page=&size=",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Matches title or description"
+                },
+                {
+                  "key": "is_active",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "is_public",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "mine",
+                  "value": "False",
+                  "disabled": true,
+                  "description": "Admins only: restrict to forms they own"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "List / search forms (admin: all, user: own)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Get a form with fields (owner/admin, or any user when the form is enabled - used to fill it)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}"
+              ],
+              "query": []
+            },
+            "description": "Get a form with fields (owner/admin, or any user when the form is enabled - used to fill it)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Edit form settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}"
+              ],
+              "query": []
+            },
+            "description": "Edit form settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Customer Feedback v2\",\n  \"is_public\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Delete a form and all its responses",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}"
+              ],
+              "query": []
+            },
+            "description": "Delete a form and all its responses"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH Enable / disable a form",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/status",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "status"
+              ],
+              "query": []
+            },
+            "description": "Enable / disable a form",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Duplicate a form with its fields",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/duplicate",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "duplicate"
+              ],
+              "query": []
+            },
+            "description": "Duplicate a form with its fields"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET List fields in display order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/fields",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "fields"
+              ],
+              "query": []
+            },
+            "description": "List fields in display order"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Add a field (appended at the end)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/fields",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "fields"
+              ],
+              "query": []
+            },
+            "description": "Add a field (appended at the end)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Full name\",\n  \"field_type\": \"text\",\n  \"is_required\": true,\n  \"placeholder\": \"Your name\",\n  \"min_value\": 2,\n  \"max_value\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.collectionVariables.set('field_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Reorder fields (drag & drop)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/fields/reorder",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "fields",
+                "reorder"
+              ],
+              "query": []
+            },
+            "description": "Reorder fields (drag & drop)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"field_ids\": [\n    3,\n    2,\n    1\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Edit a field (type cannot change)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/fields/{{field_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "fields",
+                "{{field_id}}"
+              ],
+              "query": []
+            },
+            "description": "Edit a field (type cannot change)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Your full name\",\n  \"is_required\": true,\n  \"cond_field_id\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Delete a field (and its collected answers)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/fields/{{field_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "fields",
+                "{{field_id}}"
+              ],
+              "query": []
+            },
+            "description": "Delete a field (and its collected answers)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Add an option to a dropdown / radio / checkbox field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/fields/{{field_id}}/options",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "fields",
+                "{{field_id}}",
+                "options"
+              ],
+              "query": []
+            },
+            "description": "Add an option to a dropdown / radio / checkbox field",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Chennai\",\n  \"value\": \"chennai\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.collectionVariables.set('option_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Edit an option",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/fields/{{field_id}}/options/{{option_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "fields",
+                "{{field_id}}",
+                "options",
+                "{{option_id}}"
+              ],
+              "query": []
+            },
+            "description": "Edit an option",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Coimbatore\",\n  \"value\": \"coimbatore\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Delete an option",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/fields/{{field_id}}/options/{{option_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "fields",
+                "{{field_id}}",
+                "options",
+                "{{option_id}}"
+              ],
+              "query": []
+            },
+            "description": "Delete an option"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public Forms (no login required)",
+      "item": [
+        {
+          "name": "GET Fetch a public form definition by its slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/public/forms/{{slug}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "public",
+                "forms",
+                "{{slug}}"
+              ],
+              "query": []
+            },
+            "description": "Fetch a public form definition by its slug",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Submit a public form (anonymous; attributed to the user if a valid token is sent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/public/forms/{{slug}}/responses",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "public",
+                "forms",
+                "{{slug}}",
+                "responses"
+              ],
+              "query": []
+            },
+            "description": "Submit a public form (anonymous; attributed to the user if a valid token is sent)",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"field_id\": 1,\n      \"value\": \"Sandhiya\"\n    },\n    {\n      \"field_id\": 2,\n      \"value\": \"sandhiya@example.com\"\n    },\n    {\n      \"field_id\": 3,\n      \"value\": 4\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.collectionVariables.set('response_id', pm.response.json().response_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Upload a file for a public form's file field",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/public/forms/{{slug}}/uploads",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "public",
+                "forms",
+                "{{slug}}",
+                "uploads"
+              ],
+              "query": []
+            },
+            "description": "Upload a file for a public form's file field",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.collectionVariables.set('file_id', pm.response.json().file_id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Responses",
+      "item": [
+        {
+          "name": "POST Submit a response as a logged-in user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/responses",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "responses"
+              ],
+              "query": []
+            },
+            "description": "Submit a response as a logged-in user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"field_id\": 1,\n      \"value\": \"Sandhiya\"\n    },\n    {\n      \"field_id\": 2,\n      \"value\": \"sandhiya@example.com\"\n    },\n    {\n      \"field_id\": 3,\n      \"value\": 4\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.collectionVariables.set('response_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET List responses of a form with search & filters (owner/admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/responses?search=&field_id=&field_value=&submitted_by=&anonymous=&date_from=&date_to=&page=&size=",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "responses"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Free text across all answers and the submitter name"
+                },
+                {
+                  "key": "field_id",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Filter on a specific field (use with field_value)"
+                },
+                {
+                  "key": "field_value",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Answer of field_id must contain this text"
+                },
+                {
+                  "key": "submitted_by",
+                  "value": "",
+                  "disabled": true,
+                  "description": "User id of the submitter"
+                },
+                {
+                  "key": "anonymous",
+                  "value": "",
+                  "disabled": true,
+                  "description": "true = only anonymous, false = only logged-in"
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "List responses of a form with search & filters (owner/admin)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET My own submissions across all forms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/responses/mine?page=&size=",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "responses",
+                "mine"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "My own submissions across all forms"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Get one response",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/responses/{{response_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "responses",
+                "{{response_id}}"
+              ],
+              "query": []
+            },
+            "description": "Get one response"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Edit a response (admin, form owner, or the submitter when the form allows editing)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{api}}/responses/{{response_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "responses",
+                "{{response_id}}"
+              ],
+              "query": []
+            },
+            "description": "Edit a response (admin, form owner, or the submitter when the form allows editing)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"field_id\": 1,\n      \"value\": \"Sandhiya\"\n    },\n    {\n      \"field_id\": 2,\n      \"value\": \"sandhiya@example.com\"\n    },\n    {\n      \"field_id\": 3,\n      \"value\": 4\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Delete a response (admin / form owner)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/responses/{{response_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "responses",
+                "{{response_id}}"
+              ],
+              "query": []
+            },
+            "description": "Delete a response (admin / form owner)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Change history of a response",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/responses/{{response_id}}/history",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "responses",
+                "{{response_id}}",
+                "history"
+              ],
+              "query": []
+            },
+            "description": "Change history of a response"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "File Uploads",
+      "item": [
+        {
+          "name": "POST Upload a file for a 'file' field (logged-in users)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/uploads",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "uploads"
+              ],
+              "query": []
+            },
+            "description": "Upload a file for a 'file' field (logged-in users)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.collectionVariables.set('file_id', pm.response.json().file_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Download an uploaded file (admin / form owner / submitter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/uploads/{{file_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "uploads",
+                "{{file_id}}"
+              ],
+              "query": []
+            },
+            "description": "Download an uploaded file (admin / form owner / submitter)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "GET Dashboard totals, 30-day trend and top forms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/analytics/dashboard?days=",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "analytics",
+                "dashboard"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Dashboard totals, 30-day trend and top forms"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Form-wise analytics (owner/admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/analytics/forms/{{form_id}}?days=",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "analytics",
+                "forms",
+                "{{form_id}}"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Form-wise analytics (owner/admin)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Exports (Excel & PDF)",
+      "item": [
+        {
+          "name": "GET Download all responses as Excel (.xlsx)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/export/excel",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "export",
+                "excel"
+              ],
+              "query": []
+            },
+            "description": "Download all responses as Excel (.xlsx)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Download all responses as PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/export/pdf",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "export",
+                "pdf"
+              ],
+              "query": []
+            },
+            "description": "Download all responses as PDF"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Start a background (Celery) export for large forms",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/forms/{{form_id}}/export-jobs?format=",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "forms",
+                "{{form_id}}",
+                "export-jobs"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "xlsx",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Start a background (Celery) export for large forms"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.collectionVariables.set('task_id', pm.response.json().task_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Poll a background export job",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/export-jobs/{{task_id}}",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "export-jobs",
+                "{{task_id}}"
+              ],
+              "query": []
+            },
+            "description": "Poll a background export job"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Download the finished export file",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/export-jobs/{{task_id}}/download",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "export-jobs",
+                "{{task_id}}",
+                "download"
+              ],
+              "query": []
+            },
+            "description": "Download the finished export file"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Activity Logs",
+      "item": [
+        {
+          "name": "GET Activity logs (admin: everyone, user: own actions)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api}}/activity-logs?user_id=&action=&entity_type=&date_from=&date_to=&page=&size=",
+              "host": [
+                "{{api}}"
+              ],
+              "path": [
+                "activity-logs"
+              ],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Admins only"
+                },
+                {
+                  "key": "action",
+                  "value": "",
+                  "disabled": true,
+                  "description": "e.g. form.create, response.submit, user.login"
+                },
+                {
+                  "key": "entity_type",
+                  "value": "",
+                  "disabled": true,
+                  "description": "form | field | response | user"
+                },
+                {
+                  "key": "date_from",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "date_to",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "25",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Activity logs (admin: everyone, user: own actions)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "GET Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ],
+              "query": []
+            },
+            "description": "Health check",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 2xx', function () { pm.expect(pm.response.code).to.be.within(200, 299); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
