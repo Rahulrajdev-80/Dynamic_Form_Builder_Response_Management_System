@@ -1,151 +1,852 @@
 # Dynamic Form Builder & Response Management System
 
-Create forms without touching application code: drag-and-drop builder, 9 field types, validations, conditional
-visibility, public & authenticated submission, response management (search, edit, history), analytics,
-Excel/PDF export and activity logs.
+A full-stack web application that allows users to create dynamic forms, collect responses, manage submissions, and analyze form data without changing the application code.
 
-| Layer | Technology |
-|---|---|
-| Backend | Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Pydantic v2, JWT (PyJWT), Celery + Redis |
-| Frontend | React (Vite) + TypeScript, Material UI, Axios, React Router, React Hook Form, Chart.js |
-| Database | MySQL 8.0 |
-| Tooling | Docker & Docker Compose, Swagger/OpenAPI, Postman |
+The system provides a configurable form-building platform where administrators can create forms, add different field types, configure validation rules, control field visibility, collect responses, view analytics, and export response data.
 
-## Project layout
+---
 
-```
-form-builder/
-├── docker-compose.yml          # db + redis + backend + celery worker + frontend
-├── .env.example                # copy to .env
+## 🚀 Features
+
+### Authentication & Authorization
+
+- User registration and login
+- JWT-based authentication
+- Access token and refresh token support
+- Password change
+- Current user information
+- Role-Based Access Control (RBAC)
+- Admin and User roles
+- Protected API endpoints
+- Admin-only user and role management
+
+### Dynamic Form Builder
+
+- Create forms
+- View forms
+- Update forms
+- Delete forms
+- Enable / disable forms
+- Dynamic field creation
+- Dynamic field configuration
+- Field ordering
+- Required field configuration
+- Field options configuration
+- Conditional field visibility
+- Form schema management
+- Drag-and-drop form building
+- Dynamic form rendering
+
+### Supported Field Types
+
+- Text
+- Number
+- Email
+- Date
+- Dropdown
+- Checkbox
+- Radio Button
+- File Upload
+- Rating
+
+### Response Management
+
+- Public form submissions
+- Authenticated form submissions
+- Required field validation
+- Response creation
+- Response viewing
+- Response updating
+- Response search
+- Response filtering
+- Response history
+- Submission tracking
+
+### Dashboard & Analytics
+
+- Dashboard statistics
+- Form statistics
+- Response statistics
+- Form-wise analytics
+- Response summaries
+- Submission trends
+- Activity tracking
+- User activity logs
+
+### Export
+
+- Export form responses to Excel
+- Export form responses to PDF
+- Background export processing
+- Celery-based background tasks
+- Redis-based task queue
+
+---
+
+# 🧠 How the Application Works
+
+The application follows a configuration-driven approach.
+
+Instead of creating every form directly inside the source code, the form structure is stored as data.
+
+For example, a form field can contain configuration such as:
+The frontend reads this configuration and dynamically renders the correct UI component.
+Example:
+Text Configuration
+        ↓
+Text Input
+
+Dropdown Configuration
+        ↓
+Dropdown Component
+
+Radio Configuration
+        ↓
+Radio Button Group
+
+Rating Configuration
+        ↓
+Rating Component
+
+This allows different forms to be created using the same application without changing the application code.
+🔄 Main Application Flow
+User
+  ↓
+Login / Registration
+  ↓
+JWT Authentication
+  ↓
+Form Builder
+  ↓
+Create Form
+  ↓
+Add Dynamic Fields
+  ↓
+Configure Fields
+  ↓
+Save Form Configuration
+  ↓
+Enable / Publish Form
+  ↓
+User Opens Form
+  ↓
+Generic Form Renderer
+  ↓
+Fill Form
+  ↓
+Validation
+  ↓
+Submit Response
+  ↓
+Backend Processing
+  ↓
+Store Response in Database
+  ↓
+Response Management
+  ↓
+Dashboard & Analytics
+  ↓
+Excel / PDF Export
+
+🏗️ System Architecture
+                    ┌──────────────────────┐
+                    │      React UI        │
+                    │ TypeScript + MUI     │
+                    └──────────┬───────────┘
+                               │
+                               │ REST API
+                               ▼
+                    ┌──────────────────────┐
+                    │       FastAPI        │
+                    │      Backend         │
+                    └──────────┬───────────┘
+                               │
+             ┌─────────────────┼─────────────────┐
+             │                 │                 │
+             ▼                 ▼                 ▼
+       ┌───────────┐     ┌────────────┐    ┌─────────────┐
+       │   MySQL   │     │   Redis    │    │   Celery    │
+       │ Database  │     │ Task Queue │    │   Worker    │
+       └───────────┘     └────────────┘    └─────────────┘
+
+🛠️ Technology Stack
+Backend
+- Python 3.12
+- FastAPI
+- SQLAlchemy
+- Alembic
+- Pydantic
+- MySQL 8
+- PyJWT
+- Bcrypt
+- Celery
+- Redis
+Frontend
+- React
+- TypeScript
+- Vite
+- Material UI (MUI)
+- Axios
+- React Router
+- React Hook Form
+- Chart.js
+Tools
+- Git
+- GitHub
+- Docker
+- Docker Compose
+- Postman
+- Swagger / OpenAPI
+- MySQL Workbench
+- VS Code
+🗄️ Database
+The application uses MySQL 8 as the primary relational database.
+The main application entities include:
+Users
+Roles
+Forms
+Form Fields
+Field Options
+Form Responses
+Response Details
+Response History
+Activity Logs
+
+Main Relationship Flow
+User
+  ↓
+Role
+
+User
+  ↓
+Forms
+  ↓
+Form Fields
+  ↓
+Field Options
+
+Form
+  ↓
+Form Responses
+  ↓
+Response Details
+  ↓
+Response History
+
+User / System
+  ↓
+Activity Logs
+
+📁 Project Structure
+Dynamic_Form_Builder_Response_Management_System/
+│
 ├── backend/
+│   ├── alembic/
+│   │   └── versions/
+│   │
 │   ├── app/
-│   │   ├── main.py             # app, CORS, startup seed (roles + first admin)
-│   │   ├── core/               # settings, JWT + password hashing
-│   │   ├── db/session.py       # engine, SessionLocal, Base
-│   │   ├── models/models.py    # all tables
-│   │   ├── schemas/            # Pydantic request/response models
-│   │   ├── api/deps.py         # auth + permission dependencies
-│   │   ├── api/v1/             # routers: auth, users, forms, public, responses, uploads, analytics, exports, activity
-│   │   ├── services/           # validation (+conditional logic), responses/history, export, uploads, activity log
-│   │   └── worker/             # Celery app + background export task
-│   ├── alembic/                # migrations (0001_initial_schema)
-│   ├── tests/                  # pytest suite (10 tests)
-│   └── scripts/generate_docs.py# regenerates openapi.json, API_ENDPOINTS.md, Postman collection
-├── frontend/                   # React + Vite + TS app (src/pages, src/components, src/api)
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   └── security.py
+│   │   │
+│   │   ├── models/
+│   │   │   └── models.py
+│   │   │
+│   │   ├── schemas/
+│   │   │
+│   │   ├── services/
+│   │   │
+│   │   ├── worker/
+│   │   │   ├── celery_app.py
+│   │   │   └── tasks.py
+│   │   │
+│   │   └── main.py
+│   │
+│   ├── tests/
+│   ├── Dockerfile
+│   ├── alembic.ini
+│   └── requirements.txt
+│
+├── formflow-frontend-redesign/
+│   └── frontend-redesign/
+│       ├── src/
+│       ├── Dockerfile
+│       ├── index.html
+│       ├── package.json
+│       ├── package-lock.json
+│       ├── nginx.conf
+│       ├── tsconfig.json
+│       └── vite.config.ts
+│
 ├── docs/
-│   ├── API_ENDPOINTS.md        # every endpoint, access level, description
-│   ├── openapi.json            # OpenAPI 3 spec (same as /openapi.json)
-│   ├── schema.sql              # MySQL 8 schema
-│   └── PLAN_AND_QUESTIONS.md   # 5-day plan, assumptions, questions
-└── postman/FormBuilder.postman_collection.json
-```
+├── postman/
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+└── README.md
 
-## Run with Docker (recommended)
+⚙️ Environment Configuration
+The project uses environment variables for database, authentication, Redis, uploads, and exports.
+Example configuration:
+DATABASE_URL=mysql+pymysql://formuser:formpass@db:3306/formbuilder
 
-```bash
-cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
-docker compose up --build     # builds the images and starts all 5 containers
-```
+SECRET_KEY=your_secret_key
+ALGORITHM=HS256
 
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:3000 |
-| Swagger UI | http://localhost:8000/docs |
-| ReDoc | http://localhost:8000/redoc |
-| MySQL (host access, e.g. Workbench) | `localhost:3307`, user `formuser`, password `formpass` |
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
 
-The backend container runs `alembic upgrade head` on start and seeds the roles and a first admin:
-**admin@example.com / Admin@12345** (change it in `.env`).
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/1
 
-## Run locally without Docker (Windows friendly)
+EXPORT_DIR=/data/exports
+UPLOAD_DIR=/data/uploads
 
-Backend (needs a MySQL 8 database named `formbuilder`; Redis is only needed for background exports):
+Do not commit the real .env file or production credentials to GitHub.
 
-```powershell
+The repository contains .env.example as a configuration template.
+🐳 Docker Configuration
+The project uses Docker Compose to run the complete application stack.
+The following services are configured:
+MySQL
+Redis
+FastAPI Backend
+Celery Worker
+React Frontend
+
+Start the Complete Application
+From the project root:
+docker compose up --build
+
+Run in Background
+docker compose up --build -d
+
+Check Running Containers
+docker compose ps
+
+Stop the Application
+docker compose down
+
+Stop and Remove Containers
+docker compose down
+
+🌐 Application URLs
+After starting the project with Docker Compose:
+Frontend
+http://localhost:3000
+
+Backend API
+http://localhost:8000
+
+Swagger API Documentation
+http://localhost:8000/docs
+
+OpenAPI JSON
+http://localhost:8000/openapi.json
+
+MySQL
+The MySQL container runs internally on:
+3306
+
+The host port is configured through Docker Compose.
+Redis
+Redis runs internally on:
+6379
+
+🔐 Default Admin Account
+For local development, a default administrator account is available.
+Email:
+admin@example.com
+
+Password:
+Admin@12345
+
+Change development credentials before using the application in a production environment.
+
+🔑 Authentication Flow
+Authentication uses JWT tokens.
+User Login
+    ↓
+FastAPI Authentication
+    ↓
+Validate Email + Password
+    ↓
+Generate JWT Access Token
+    ↓
+Frontend Stores Authentication State
+    ↓
+API Requests
+    ↓
+Authorization: Bearer <JWT>
+
+Protected endpoints verify the JWT before processing the request.
+👥 Role-Based Access Control
+The application supports two primary roles:
+Admin
+User
+
+Admin
+Admin users can perform administrative operations such as:
+- Manage users
+- Manage roles
+- Create forms
+- Update forms
+- Delete forms
+- Enable / disable forms
+- Manage form fields
+- View responses
+- Access analytics
+- View activity logs
+- Export response data
+User
+Users can perform operations allowed by the application's authorization rules, including:
+- Login
+- Access permitted forms
+- Submit responses
+- View permitted response information
+🧩 Dynamic Form Builder Processing
+The form builder allows an administrator to create a form without writing new frontend or backend code.
+Form Creation Flow
+Create Form
+    ↓
+Add Field
+    ↓
+Select Field Type
+    ↓
+Configure Field
+    ↓
+Set Required / Optional
+    ↓
+Add Options if Required
+    ↓
+Set Field Order
+    ↓
+Configure Conditional Visibility
+    ↓
+Save Form
+
+The configuration is stored in the database.
+🎨 Generic Form Renderer
+The frontend uses a generic rendering approach.
+The renderer receives the field configuration and selects the appropriate UI component.
+Field Configuration
+        ↓
+Generic Renderer
+        ↓
+Check Field Type
+        ↓
+┌─────────────────────────────┐
+│ text      → Text Input      │
+│ number    → Number Input    │
+│ email     → Email Input     │
+│ date      → Date Input      │
+│ dropdown  → Select          │
+│ checkbox  → Checkbox        │
+│ radio     → Radio Group     │
+│ file      → File Upload     │
+│ rating    → Rating Control  │
+└─────────────────────────────┘
+
+This is the main reason the application can support multiple forms using the same frontend implementation.
+✅ Form Validation
+The system supports required-field validation.
+Example:
+Field: Email
+Required: Yes
+
+If the user does not enter a value:
+Submit
+  ↓
+Validation
+  ↓
+Required Field Missing
+  ↓
+Submission Blocked
+
+Valid data is sent to the backend for further processing.
+👁️ Conditional Field Visibility
+Fields can be displayed based on another field's value.
+Example:
+Question:
+Do you have previous experience?
+
+Answer:
+Yes
+
+        ↓
+
+Show:
+Experience Details
+
+If the answer is:
+No
+
+the dependent field can remain hidden.
+🔢 Field Ordering
+Fields can be arranged in the required order using the form builder.
+Example:
+1. Full Name
+2. Email
+3. Phone Number
+4. Date of Birth
+5. Experience
+6. Rating
+
+The order is stored as part of the form configuration and used when rendering the form.
+📝 Response Processing
+When a user submits a form:
+User fills form
+      ↓
+Frontend validation
+      ↓
+API request
+      ↓
+FastAPI endpoint
+      ↓
+Authentication / Authorization
+      ↓
+Backend validation
+      ↓
+Save Form Response
+      ↓
+Save Response Details
+      ↓
+Create Activity Log
+      ↓
+Return Response
+
+The response data is stored in the database and can later be viewed, filtered, updated, analyzed, or exported.
+📚 Response History
+Response changes can be tracked through response history.
+Response Created
+       ↓
+Response Updated
+       ↓
+Previous State Recorded
+       ↓
+History Available
+
+This provides traceability for response modifications.
+📊 Dashboard & Analytics Processing
+The dashboard retrieves application statistics from the backend.
+Typical information includes:
+Total Forms
+Active Forms
+Total Responses
+Users
+Recent Activity
+Form Statistics
+Response Statistics
+
+Analytics can provide form-specific response information and visual summaries.
+📤 Excel / PDF Export
+The system supports exporting form responses.
+Synchronous Export
+For supported export endpoints, the backend can generate:
+Excel
+PDF
+
+Background Export
+Long-running exports can be processed using Celery.
+Frontend
+   ↓
+FastAPI
+   ↓
+Create Celery Task
+   ↓
+Redis
+   ↓
+Celery Worker
+   ↓
+Generate Excel / PDF
+   ↓
+Save Export File
+   ↓
+Download
+
+Redis acts as the broker/result backend.
+Celery is responsible for executing the background task.
+🔴 Redis
+Redis is used as the messaging layer for background processing.
+In this project:
+FastAPI
+   ↓
+Redis
+   ↓
+Celery Worker
+
+Redis does not generate the Excel or PDF file.
+It stores and manages the queued background task information while the Celery worker performs the actual export operation.
+🟢 Celery
+Celery is used for background task execution.
+Important project files:
+backend/app/worker/celery_app.py
+backend/app/worker/tasks.py
+
+The Celery application connects to Redis and the task module contains background jobs such as response export processing.
+The worker is started using:
+celery -A app.worker.celery_app.celery_app worker --loglevel=info
+
+When running through Docker Compose, the worker is started automatically by the configured worker service.
+🗃️ Database Migration
+Alembic is used for database migrations.
+Run migrations with:
+docker compose exec backend alembic upgrade head
+
+Or, when running the backend directly:
 cd backend
-python -m venv .venv                 # creates an isolated Python environment
-.venv\Scripts\activate               # activates it (Linux/Mac: source .venv/bin/activate)
-pip install -r requirements.txt      # installs the backend dependencies
-copy .env.example .env               # then edit DATABASE_URL if needed
-alembic upgrade head                 # creates all tables in MySQL
-uvicorn app.main:app --reload        # starts the API on http://localhost:8000
-# optional, for background exports:
-celery -A app.worker.celery_app.celery_app worker --loglevel=info --pool=solo
-```
+py -m alembic upgrade head
 
-Frontend:
+🧪 Testing
+Backend tests are located inside:
+backend/tests/
 
-```powershell
-cd frontend
-npm install                          # installs the React dependencies
-copy .env.example .env               # VITE_API_URL=http://localhost:8000/api/v1
-npm run dev                          # starts Vite on http://localhost:5173
-```
-
-## Tests
-
-```bash
+Run tests locally:
 cd backend
-python -m pytest -q      # uses a throw-away SQLite database - no MySQL needed
-```
+pytest
 
-Covers auth/JWT/refresh, RBAC, form ownership, field ordering, conditional logic (incl. circular-rule rejection),
-all validation paths, public submission, enable/disable, response edit permissions, history, search/filter,
-uploads, analytics, Excel/PDF export, activity logs, duplicate and cascade delete.
+When using Docker:
+docker compose exec backend pytest
 
-## Swagger, Postman
+🔎 API Testing with Swagger
+Swagger provides interactive API documentation.
+Open:
+http://localhost:8000/docs
 
-* Swagger UI: `/docs`. Click **Authorize** and log in with your **email** as the username.
-* Full endpoint table: [`docs/API_ENDPOINTS.md`](docs/API_ENDPOINTS.md) (47 endpoints).
-* Postman: import `postman/FormBuilder.postman_collection.json`. Run **Authentication > POST Login** first: it stores
-  `access_token`; create requests store `form_id`, `field_id`, `response_id`, `slug`... automatically.
-* After changing any endpoint run `python backend/scripts/generate_docs.py` to refresh all three artefacts.
+Recommended testing order:
+1. Health / System
+       ↓
+2. Register
+       ↓
+3. Login
+       ↓
+4. Get Current User
+       ↓
+5. Roles / Users
+       ↓
+6. Create Form
+       ↓
+7. Get Form
+       ↓
+8. Create Form Fields
+       ↓
+9. Configure Field Options
+       ↓
+10. Reorder Fields
+       ↓
+11. Enable Form
+       ↓
+12. Public Form
+       ↓
+13. Submit Response
+       ↓
+14. View Responses
+       ↓
+15. Response History
+       ↓
+16. Analytics
+       ↓
+17. Export
+       ↓
+18. Activity Logs
 
-## Roles and permissions
+For protected endpoints, use:
+Authorization: Bearer <JWT_TOKEN>
 
-| Action | Admin | User |
-|---|---|---|
-| Manage users / roles | yes | no |
-| See forms | all | own |
-| Create forms | yes | yes |
-| Edit / delete / enable-disable a form, build fields | all forms | own forms |
-| See responses, analytics, exports of a form | all forms | own forms |
-| Submit a response | yes | yes (enabled forms) |
-| Edit a response | any | own submission **only if** the form has *allow_response_editing*; form owners can edit responses to their forms |
-| Delete a response | any | responses of own forms |
-| Activity logs | everyone's | own actions |
+📮 Postman Testing
+The project also contains Postman resources under:
+postman/
 
-Public forms (`is_public = true`) are reachable without login at `/f/<slug>` in the UI and
-`/api/v1/public/forms/<slug>` in the API. Disabled forms reject every submission (public and authenticated).
+Postman can be used to test the REST APIs independently from the React frontend.
+Typical flow:
+Postman
+   ↓
+FastAPI
+   ↓
+Service / Business Logic
+   ↓
+SQLAlchemy
+   ↓
+MySQL
+   ↓
+API Response
+   ↓
+Postman
 
-## How the important features work
+🛡️ Security
+The project follows basic application security practices:
+- JWT-based authentication
+- Password hashing
+- Protected routes
+- Role-based authorization
+- CORS configuration
+- Environment variables
+- Database credentials outside source code
+- .env excluded from Git
+- Separate development and production configuration
+Never commit:
+.env
+Database passwords
+JWT secret keys
+Production credentials
+Private API keys
 
-* **Field types**: text, number, email, date, dropdown, checkbox (multi-option or single tick-box), radio, file, rating.
-  `min_value` / `max_value` mean *length* for text, *value* for number and the *star scale* for rating (default 5).
-* **Validation** is enforced on the server (and mirrored in the UI): required, type/format, option membership,
-  length/range bounds, rating range, uploaded file exists. Errors return HTTP 422 with `{"detail": {"errors": {"<field_id>": "message"}}}`.
-* **Conditional visibility**: a field can depend on one parent field (`cond_field_id`, `cond_operator`, `cond_value`;
-  operators `equals, not_equals, contains, gt, lt, not_empty`). A hidden field is never required and its value is
-  ignored/discarded; a field is hidden when its parent is hidden. Circular rules are rejected when saving.
-* **Field ordering**: `PUT /forms/{id}/fields/reorder` (used by the drag-and-drop builder).
-* **Response history**: every create/update stores a snapshot plus a per-field diff (`response_history` table -
-  an extra table beyond the 8 in the brief, needed for the history feature).
-* **Files**: `POST /uploads` (or `/public/forms/{slug}/uploads`) returns a `file_id`; send it as the value of the file field.
-  Allowed: pdf, images, doc(x), xls(x), csv, txt up to 10 MB.
-* **Exports**: direct `GET /forms/{id}/export/excel|pdf`, and `POST /forms/{id}/export-jobs` for large forms
-  (Celery worker; poll `/export-jobs/{task_id}` then download).
-* **Analytics**: dashboard totals + 30-day trend + top forms; per-form counts, rating averages/distributions,
-  choice distributions, number min/avg/max, text samples.
+🧰 Useful Docker Commands
+Build containers
+docker compose build
 
-## Git & GitHub
+Start containers
+docker compose up
 
-```bash
-git init                                  # turns the folder into a Git repository
-git add .                                 # stages every file (.gitignore keeps secrets and build output out)
-git commit -m "feat: dynamic form builder - backend, frontend, docker, docs"
-git branch -M main                        # names the default branch main
-git remote add origin https://github.com/<your-user>/<repo>.git
-git push -u origin main                   # uploads the code and links your local branch to GitHub
-```
+Start in background
+docker compose up -d
 
-See `docs/PLAN_AND_QUESTIONS.md` for a suggested commit-per-day history.
+Rebuild and start
+docker compose up --build
+
+View container status
+docker compose ps
+
+View backend logs
+docker compose logs backend
+
+View worker logs
+docker compose logs worker
+
+View Redis logs
+docker compose logs redis
+
+View frontend logs
+docker compose logs frontend
+
+Follow backend logs
+docker compose logs -f backend
+
+Follow worker logs
+docker compose logs -f worker
+
+Stop services
+docker compose down
+
+🌿 Git & GitHub
+Clone the project:
+git clone https://github.com/Rahulrajdev-80/Dynamic_Form_Builder_Response_Management_System.git
+
+Navigate to the project:
+cd Dynamic_Form_Builder_Response_Management_System
+
+Check Git status:
+git status
+
+Add changes:
+git add .
+
+Commit changes:
+git commit -m "Update project"
+
+Push changes:
+git push
+
+📌 Development Workflow
+The recommended development workflow is:
+1. Start Docker services
+        ↓
+2. Verify MySQL
+        ↓
+3. Verify Redis
+        ↓
+4. Verify FastAPI
+        ↓
+5. Verify Celery Worker
+        ↓
+6. Open React Frontend
+        ↓
+7. Login
+        ↓
+8. Create / Configure Form
+        ↓
+9. Submit Response
+        ↓
+10. Verify Response
+        ↓
+11. Check Analytics
+        ↓
+12. Test Export
+        ↓
+13. Check Activity Logs
+
+📋 Main Components
+Component	Responsibility
+React	User interface
+TypeScript	Frontend type safety
+Material UI	UI components
+React Router	Frontend routing
+React Hook Form	Form handling
+Axios	API communication
+Chart.js	Analytics charts
+FastAPI	REST API backend
+SQLAlchemy	Database ORM
+Alembic	Database migrations
+Pydantic	Data validation
+JWT	Authentication
+MySQL	Application database
+Redis	Background task queue / result backend
+Celery	Background task execution
+Docker	Application containerization
+Docker Compose	Multi-service orchestration
+Swagger	API documentation and testing
+Postman	API testing
+
+
+📌 Project Highlights
+Configuration-Driven Forms
+Forms are stored as configurable data rather than hard-coded application screens.
+Reusable Generic Renderer
+The frontend can render multiple field types from the same configuration-based rendering system.
+Role-Based Access
+Different application operations can be controlled based on Admin and User roles.
+Background Processing
+Excel and PDF export operations can be processed asynchronously using Celery and Redis.
+Response Tracking
+Responses and their changes can be managed and tracked through response history and activity logs.
+Full-Stack Architecture
+The project combines:
+React
++
+FastAPI
++
+MySQL
++
+Redis
++
+Celery
++
+Docker
+
+into a complete form management platform.
+📈 Future Enhancements
+Possible future improvements include:
+- Email notifications
+- Advanced form templates
+- More conditional logic operators
+- Advanced analytics dashboards
+- Scheduled reports
+- Cloud file storage
+- Multi-language forms
+- Form versioning
+- More export formats
+- Production deployment with CI/CD
+👨‍💻 Author
+Rahul Raj K
+```text
+Field Type
+Field Label
+Required
+Options
+Order
+Validation Rules
+Visibility Rules
